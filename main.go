@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 	"fyne.io/fyne/v2/app"
 	// "fyne.io/fyne/v2/widget"
 )
@@ -9,6 +9,9 @@ import (
 func main() {
 	// Setup Fyne GUI boilerplate
 	myApp := app.New()
-	window := myApp.NewWindow("temp")
+	window := myApp.NewWindow("Pet Adoption Tracker")
+
+	fmt.Println(Dog)
+
 	window.ShowAndRun()
 }
