@@ -25,3 +25,9 @@ go build .
 
 The `CGO_ENABLED=1` environment variable may have to be passed if building
 fails, as well as ensuring `gcc` and sqlite are available on the system.
+
+### Running Tests:
+
+```
+go test
+```
