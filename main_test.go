@@ -1,14 +1,16 @@
 package main
 
+// This contains all tests and test helpers for this app
+
 import (
 	"database/sql"
 	"errors"
 	"fmt"
 	"math/rand/v2"
 	_ "modernc.org/sqlite"
+	"regexp"
 	"slices"
 	"testing"
-	// "regexp"
 	// "strconv"
 )
 
@@ -80,8 +82,8 @@ type InsertData struct {
 
 // Helper to randomly pick AnimalType for tests
 func getRandomAnimalType() AnimalType {
-	// Account for iota beginning from 0
-	maxEnumVal := len(allAnimalTypes) - 1
+	// IntN returns in interval [0,n) so we won't need len-1 to avoid OOB
+	maxEnumVal := len(allAnimalTypes)
 	n := rand.IntN(maxEnumVal)
 	return AnimalType(n)
 }
@@ -125,6 +127,110 @@ func TestAddSurrenderedAnimal(t *testing.T) {
 			err := db.QueryRow(query, animalType, tt.animalName).Scan()
 			if errors.Is(err, sql.ErrNoRows) {
 				t.Error("Unable to find inserted animal in DB")
+			}
+		})
+	}
+}
+
+// Test data struct, stores slice of animals to add then check for
+type FetchData struct {
+	animals []Animal
+}
+
+// Helper to generate slices of test animal data, for 1..n animals
+func generateRandomAnimals(n int) []Animal {
+	// Offset to avoid 0, and allow n as result
+	randn := rand.IntN(n) + 1
+	res := make([]Animal, randn)
+	for i := range res {
+		res[i] = Animal{getRandomAnimalType(), generateRandomString()}
+	}
+	return res
+}
+
+// Test successful fetch of added animals into DB
+func TestGetAdoptedAnimalSuccess(t *testing.T) {
+	// Insert simple + random animal test data, then determine if oldest added animals are returned
+	testData := []FetchData{
+		{
+			animals: []Animal{
+				Animal{Dog, "dog1"},
+				Animal{Dog, "dog2"},
+			},
+		},
+		{
+			animals: []Animal{
+				Animal{Dog, "dog1"},
+				Animal{Dog, "dog2"},
+				Animal{Cat, "cat1"},
+				Animal{Cat, "cat2"},
+				Animal{Dog, "dog3"},
+				Animal{Cat, "cat3"},
+			},
+		},
+	}
+	// Append 20 random FetchData structs containing anywhere from 1..20 Animals each
+	for _ = range 20 {
+		testData = append(testData, FetchData{generateRandomAnimals(20)})
+	}
+
+	// Use test data in "table driven" testing approach/loop
+	numTests := len(testData)
+	for i, tt := range testData {
+		// Just use test case # since data is too long/complicated to print directly
+		testname := fmt.Sprintf("%d/%d", i, numTests)
+
+		// Execute "subtest" on one list of test animal data
+		t.Run(testname, func(t *testing.T) {
+			// Create a new in-memory DB for each run
+			db := initTestDBHelper(t)
+			defer db.Close()
+
+			// First, insert data into DB directly, in same sequence as test data
+			tx, err := db.Begin()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Prepare a statement for repeated usage
+			stmt, err := tx.Prepare("INSERT INTO Animals(type, name) VALUES (?, ?)")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			defer stmt.Close()
+
+			// Insert all animals in order, also separating out animals by type here for tracking oldest per type later
+			numTypes := len(allAnimalTypes)
+			// numOfEachType := make([]int, numTypes)
+			animalsByType := make([][]Animal, numTypes)
+			for _, a := range tt.animals {
+				// Add animal to DB
+				_, err = stmt.Exec(a.animal, a.name)
+
+				// Take advantage of using AnimalType enum as index into animalsByType to filter animals by type
+				animalsByType[a.animal] = append(animalsByType[a.animal], a)
+			}
+
+			// Commit the DB transaction
+			err = tx.Commit()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Third, go through each type and adopt all animals of it until there are no more animals to adopt
+			// Compile regex pattern for parsing result of getAdoptedAnimal() later, for alphanumeric names
+			re := regexp.MustCompile(`Adopted animal is: ([a-zA-Z0-9]+)`)
+			for i = range numTypes {
+				animalTypeString := animalNames[AnimalType(i)]
+				for _, a := range animalsByType[i] {
+					resultMsg := getAdoptedAnimal(db, animalTypeString)
+					// We are expecting the current animal name to match name mentioned in resultMsg (in first capture group, matches[1])
+					matches := re.FindStringSubmatch(resultMsg)
+					if matches[1] != a.name {
+						t.Fatalf("Got %s, want %s from match", matches[1], a.name)
+					}
+				}
 			}
 		})
 	}
