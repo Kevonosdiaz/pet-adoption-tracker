@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -18,7 +19,7 @@ func addSurrenderedAnimal(db *sql.DB, animalTypeString string, animalName string
 	// Protect against an early exit without Commit() being called successfully
 	defer tx.Rollback()
 
-	// Prepare our query
+	// Create our query
 	query := "INSERT INTO Animals(type, name) VALUES (?, ?)"
 
 	// Execute query with values; animalTypeString is converted back to an enum (int) first
@@ -27,7 +28,7 @@ func addSurrenderedAnimal(db *sql.DB, animalTypeString string, animalName string
 		log.Fatal(err)
 	}
 
-	// Commit it to DB
+	// Commit the write transaction to DB
 	err = tx.Commit()
 	if err != nil {
 		log.Fatal(err)
@@ -35,13 +36,47 @@ func addSurrenderedAnimal(db *sql.DB, animalTypeString string, animalName string
 	return "Successfully added animal!"
 }
 
-func getAdoptedAnimal(db *sql.DB, animalTypeString string) {
-	// tx, err := db.Begin()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	//
-	// // First check if there is an animal we can get
+// Fetch oldest animal of specified type and remove it (if animal of type exists), returning status message either with animal details or error
+func getAdoptedAnimal(db *sql.DB, animalTypeString string) string {
+	// First find oldest animal matching type (and check if it exists)
+	var animalId int
+	var animalResult Animal
+	animalType := stringToAnimalType[animalTypeString]
+	selectQuery := "SELECT id, type, name FROM Animals WHERE type = ? ORDER BY time_added ASC LIMIT 1;"
+	err := db.QueryRow(selectQuery, animalType).Scan(&animalId, &animalResult.animal, &animalResult.name)
+
+	// Error handling for above query
+	if errors.Is(err, sql.ErrNoRows) {
+		return "Sorry, but we don't have any animal types to adopt."
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Remove the found animal from the DB, using resulting animalId
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer tx.Rollback()
+
+	// Create our query
+	deleteQuery := "DELETE FROM Animals WHERE id = ?;"
+
+	// Execute deletion query on found animal
+	_, err = tx.Exec(deleteQuery, animalId)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Commit the write transaction to DB
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return "Adopted animal is: " + animalResult.name
 }
 
 // Gets either total number of animals if animalTypeString is "all animals", else count for specific animal

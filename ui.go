@@ -53,8 +53,6 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 		form.Refresh()
 	}
 
-	form.Refresh()
-
 	// Return the form followed by resultText label below it in a container
 	return container.New(layout.NewVBoxLayout(), form, resultText)
 
@@ -65,6 +63,9 @@ func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
 	animalTypeSelector.PlaceHolder = "Select animal type"
 
+	// Display submission error/success message in this label
+	resultText := widget.NewLabel("")
+
 	form := &widget.Form{
 		Items: []*widget.FormItem{
 			{Text: "Animal Type", Widget: animalTypeSelector, Required: true},
@@ -72,7 +73,8 @@ func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			getAdoptedAnimal(db, animalTypeSelector.Selected)
+			resultMsg := getAdoptedAnimal(db, animalTypeSelector.Selected)
+			resultText.SetText(resultMsg)
 			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Adopt Pet",
@@ -90,8 +92,8 @@ func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 		form.Refresh()
 	}
 
-	form.Refresh()
-	return form
+	// Return the form followed by resultText label below it in a container
+	return container.New(layout.NewVBoxLayout(), form, resultText)
 }
 
 // Create UI element allowing user to get animal count for all animals or specific type
