@@ -4,21 +4,21 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	_ "github.com/mattn/go-sqlite3"
-	"slices"
 )
 
 // Create UI element allowing user to add newly surrendered animal to database
 func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 	// Create widgets for name text field and animal type selector dropdown
+	allAnimalStrings := getAllAnimalStrings()
 	animalName := widget.NewEntry()
-	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
-	animalTypeSelector.PlaceHolder = "Select animal type"
+	animalTypeSelector := widget.NewSelect(allAnimalStrings, func(s string) {})
+	// Default to first animal type in list
+	animalTypeSelector.Selected = allAnimalStrings[0]
 
 	// Display submission error/success message in this label
 	resultText := widget.NewLabel("")
@@ -35,22 +35,8 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 			resultMsg := addSurrenderedAnimal(db, animalTypeSelector.Selected, animalName.Text)
 			resultText.SetText(resultMsg)
 			animalName.SetText("")
-			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Add Animal",
-		// Runs on form change to ensure animalType must be given before submitting
-		Validator: func() error {
-			allAnimalTypeStrings := getAllAnimalStrings()
-			if slices.Contains(allAnimalTypeStrings, animalTypeSelector.Selected) {
-				return nil
-			}
-			return errors.New("")
-		},
-	}
-
-	// Ensure form Validator is re-run on selection change, since only Entry widget re-triggers Validator
-	animalTypeSelector.OnChanged = func(s string) {
-		form.Refresh()
 	}
 
 	// Return the form followed by resultText label below it in a container
@@ -60,8 +46,10 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 
 // Create UI element allowing user to get adopted animal of selected type
 func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
-	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
-	animalTypeSelector.PlaceHolder = "Select animal type"
+	allAnimalStrings := getAllAnimalStrings()
+	animalTypeSelector := widget.NewSelect(allAnimalStrings, func(s string) {})
+	// Default to first animal type in list
+	animalTypeSelector.Selected = allAnimalStrings[0]
 
 	// Display submission error/success message in this label
 	resultText := widget.NewLabel("")
@@ -75,21 +63,8 @@ func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 		OnSubmit: func() {
 			resultMsg := getAdoptedAnimal(db, animalTypeSelector.Selected)
 			resultText.SetText(resultMsg)
-			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Adopt Pet",
-		Validator: func() error {
-			allAnimalTypeStrings := getAllAnimalStrings()
-			if slices.Contains(allAnimalTypeStrings, animalTypeSelector.Selected) {
-				return nil
-			}
-			return errors.New("")
-		},
-	}
-
-	// Ensure form Validator is re-run on selection change, since only Entry widget re-triggers Validator
-	animalTypeSelector.OnChanged = func(s string) {
-		form.Refresh()
 	}
 
 	// Return the form followed by resultText label below it in a container
@@ -116,7 +91,6 @@ func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 			resultText.SetText(resultMsg)
 		},
 		SubmitText: "Get Count",
-		// NOTE: No validator needed here since all options (incl. default/placeholder) are valid
 	}
 
 	// Return the form followed by resultText label below it in a container
