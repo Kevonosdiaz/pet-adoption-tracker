@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"errors"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	_ "github.com/mattn/go-sqlite3"
 	"slices"
@@ -18,6 +20,9 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
 	animalTypeSelector.PlaceHolder = "Select animal type"
 
+	// Display submission error/success message in this label
+	resultText := widget.NewLabel("")
+
 	// Add widgets to a form
 	form := &widget.Form{
 		Items: []*widget.FormItem{
@@ -27,7 +32,8 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			addSurrenderedAnimal(db, animalName.Text, animalTypeSelector.Selected)
+			resultMsg := addSurrenderedAnimal(db, animalTypeSelector.Selected, animalName.Text)
+			resultText.SetText(resultMsg)
 			animalName.SetText("")
 			animalTypeSelector.ClearSelected()
 		},
@@ -48,7 +54,9 @@ func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 	}
 
 	form.Refresh()
-	return form
+
+	// Return the form followed by resultText label below it in a container
+	return container.New(layout.NewVBoxLayout(), form, resultText)
 
 }
 

@@ -10,18 +10,6 @@ import (
 	"log"
 )
 
-func addSurrenderedAnimal(db *sql.DB, animalName string, animalTypeString string) {
-	// Do we convert back from string to AnimalType here?
-}
-
-func getAdoptedAnimal(db *sql.DB, animalTypeString string) {
-
-}
-
-func getAnimalCount(db *sql.DB, animalTypeString string) {
-
-}
-
 func main() {
 	// Setup Fyne GUI boilerplate
 	myApp := app.New()
@@ -37,6 +25,9 @@ func main() {
 		log.Fatal(pingErr)
 	}
 	defer db.Close()
+
+	// Initialize Animals table (if not yet created)
+	initDB(db)
 
 	// Create Fyne CanvasObject objects and corresponding labels for each UI element to add to the main window
 	// Pass in SQLite DB handle so widgets can access it

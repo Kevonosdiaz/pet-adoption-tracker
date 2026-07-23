@@ -2,7 +2,7 @@ package main
 
 // Contains data models and related functionality
 
-// NOTE: AnimalType, allAnimalTypes, and animalNames should be updated together
+// NOTE: AnimalType, allAnimalTypes, animalNames, and stringToAnimalName should be updated together
 // when adding/removing animal types
 // Defines an enum to represent each animal type
 type AnimalType int
@@ -21,6 +21,12 @@ var animalNames = map[AnimalType]string{
 	Cat: "cat",
 }
 
+var stringToAnimalType = map[string]AnimalType{
+	"dog": Dog,
+	"cat": Cat,
+}
+
+// NOTE: Consider using official stringer tool to implement String() automatically
 // Implement String() for AnimalType for printing
 func (animal AnimalType) String() string {
 	return animalNames[animal]
