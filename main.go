@@ -39,7 +39,7 @@ func makeSurrenderForm() fyne.CanvasObject {
 			animalName.SetText("")
 			animalTypeSelector.ClearSelected()
 		},
-		SubmitText: "Submit",
+		SubmitText: "Add Animal",
 		// Runs on form change to ensure animalType must be given before submitting
 		Validator: func() error {
 			allAnimalTypeStrings := getAllAnimalStrings()
@@ -75,7 +75,7 @@ func makeAdoptionForm() fyne.CanvasObject {
 			getAdoptedAnimal(animalTypeSelector.Selected)
 			animalTypeSelector.ClearSelected()
 		},
-		SubmitText: "Submit",
+		SubmitText: "Adopt Pet",
 		Validator: func() error {
 			allAnimalTypeStrings := getAllAnimalStrings()
 			if slices.Contains(allAnimalTypeStrings, animalTypeSelector.Selected) {
@@ -99,12 +99,14 @@ func main() {
 	myApp := app.New()
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
-	// Create Fyne CanvasObject objects for each UI element to add to the main window
+	// Create Fyne CanvasObject objects and corresponding labels for each UI element to add to the main window
+	addSurrenderedAnimalText := widget.NewLabel("Add a New Surrendered Animal")
 	addSurrenderedAnimalSection := makeSurrenderForm()
+	getAdoptedAnimalText := widget.NewLabel("Pick an Animal to Adopt")
 	getAdoptedAnimalSection := makeAdoptionForm()
 
 	// Layout UI elements in vertical list
-	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalSection, getAdoptedAnimalSection)
+	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection)
 	window.SetContent(windowContent)
 
 	window.ShowAndRun()

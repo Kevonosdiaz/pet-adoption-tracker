@@ -2,9 +2,9 @@ package main
 
 // Contains data models and related functionality
 
-// Define an enum to represent each animal type
 // NOTE: AnimalType, allAnimalTypes, and animalNames should be updated together
 // when adding/removing animal types
+// Defines an enum to represent each animal type
 type AnimalType int
 
 const (
