@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"errors"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
-	_ "modernc.org/sqlite"
 	"strconv"
 )
 

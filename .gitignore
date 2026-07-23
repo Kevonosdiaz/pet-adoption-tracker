@@ -9,6 +9,8 @@
 *.dylib
 pet-adoption-tracker
 animals.db
+Icon.png
+fyne-cross/
 
 # Test binary, built with `go test -c`
 *.test

@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"math/rand/v2"
-	_ "modernc.org/sqlite"
 	"regexp"
 	"slices"
 	"strconv"
@@ -45,7 +45,7 @@ func initTestDBHelper(t *testing.T) *sql.DB {
 	t.Helper()
 
 	// Setup SQLite DB connection and confirm connection is working
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}

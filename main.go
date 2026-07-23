@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	_ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
 	// Setup SQLite DB connection and confirm connection is working
-	db, err := sql.Open("sqlite", "./animals.db")
+	db, err := sql.Open("sqlite3", "./animals.db")
 	if err != nil {
 		log.Fatal(err)
 	}
