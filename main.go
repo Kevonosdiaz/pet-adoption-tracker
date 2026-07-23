@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// Setup Fyne GUI boilerplate
-	myApp := app.New()
+	myApp := app.NewWithID("pet-adoption-tracker")
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
 	// Setup SQLite DB connection and confirm connection is working
