@@ -102,6 +102,9 @@ func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 	animalTypeSelector := widget.NewSelect(append(getAllAnimalStrings(), "all animals"), func(s string) {})
 	animalTypeSelector.PlaceHolder = "all animals"
 
+	// Display resulting count in this label
+	resultText := widget.NewLabel("")
+
 	form := &widget.Form{
 		Items: []*widget.FormItem{
 			{Text: "Animal Type", Widget: animalTypeSelector, Required: false},
@@ -109,13 +112,14 @@ func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			getAnimalCount(db, animalTypeSelector.Selected)
+			resultMsg := getAnimalCount(db, animalTypeSelector.Selected)
+			resultText.SetText(resultMsg)
 			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Get Count",
 		// NOTE: No validator needed here since all options (incl. default/placeholder) are valid
 	}
 
-	form.Refresh()
-	return form
+	// Return the form followed by resultText label below it in a container
+	return container.New(layout.NewVBoxLayout(), form, resultText)
 }
