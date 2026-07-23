@@ -1,30 +1,32 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
-	// "fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"slices"
 )
 
-func addSurrenderedAnimal(animalName string, animalTypeString string) {
+func addSurrenderedAnimal(db *sql.DB, animalName string, animalTypeString string) {
 	// Do we convert back from string to AnimalType here?
 }
 
-func getAdoptedAnimal(animalTypeString string) {
+func getAdoptedAnimal(db *sql.DB, animalTypeString string) {
 
 }
 
-func getAnimalCount(animalTypeString string) {
+func getAnimalCount(db *sql.DB, animalTypeString string) {
 
 }
 
 // Create UI element allowing user to add newly surrendered animal to database
-func makeSurrenderForm() fyne.CanvasObject {
+func makeSurrenderForm(db *sql.DB) fyne.CanvasObject {
 	// Create widgets for name text field and animal type selector dropdown
 	animalName := widget.NewEntry()
 	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
@@ -39,7 +41,7 @@ func makeSurrenderForm() fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			addSurrenderedAnimal(animalName.Text, animalTypeSelector.Selected)
+			addSurrenderedAnimal(db, animalName.Text, animalTypeSelector.Selected)
 			animalName.SetText("")
 			animalTypeSelector.ClearSelected()
 		},
@@ -65,7 +67,7 @@ func makeSurrenderForm() fyne.CanvasObject {
 }
 
 // Create UI element allowing user to get adopted animal of selected type
-func makeAdoptionForm() fyne.CanvasObject {
+func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
 	animalTypeSelector.PlaceHolder = "Select animal type"
 
@@ -76,7 +78,7 @@ func makeAdoptionForm() fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			getAdoptedAnimal(animalTypeSelector.Selected)
+			getAdoptedAnimal(db, animalTypeSelector.Selected)
 			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Adopt Pet",
@@ -99,7 +101,7 @@ func makeAdoptionForm() fyne.CanvasObject {
 }
 
 // Create UI element allowing user to get animal count for all animals or specific type
-func makeAnimalCountForm() fyne.CanvasObject {
+func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 	// Allow user to pick "all animals" (default) to get count of all animals, or select a specific type instead
 	animalTypeSelector := widget.NewSelect(append(getAllAnimalStrings(), "all animals"), func(s string) {})
 	animalTypeSelector.PlaceHolder = "all animals"
@@ -111,7 +113,7 @@ func makeAnimalCountForm() fyne.CanvasObject {
 		// Send off form data to other function to handle database interaction
 		// and clear fields to prepare for another submission
 		OnSubmit: func() {
-			getAnimalCount(animalTypeSelector.Selected)
+			getAnimalCount(db, animalTypeSelector.Selected)
 			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Get Count",
@@ -127,17 +129,32 @@ func main() {
 	myApp := app.New()
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
+	// Setup SQLite DB connection and confirm connection is working
+	db, err := sql.Open("sqlite3", "./animals.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
+	defer db.Close()
+
 	// Create Fyne CanvasObject objects and corresponding labels for each UI element to add to the main window
+	// Pass in SQLite DB handle so widgets can access it
 	addSurrenderedAnimalText := widget.NewLabel("Add a New Surrendered Animal:")
-	addSurrenderedAnimalSection := makeSurrenderForm()
+	addSurrenderedAnimalSection := makeSurrenderForm(db)
+
 	getAdoptedAnimalText := widget.NewLabel("Pick an Animal to Adopt:")
-	getAdoptedAnimalSection := makeAdoptionForm()
+	getAdoptedAnimalSection := makeAdoptionForm(db)
+
 	animalCountText := widget.NewLabel("Check How Many Animals Are Up For Adoption:")
-	animalCountSection := makeAnimalCountForm()
+	animalCountSection := makeAnimalCountForm(db)
 
 	// Layout UI elements in vertical list
 	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection, animalCountText, animalCountSection)
 	window.SetContent(windowContent)
 
+	// Begin showing window and exec Fyne event loop
 	window.ShowAndRun()
 }
