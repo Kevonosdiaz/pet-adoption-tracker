@@ -169,9 +169,9 @@ func TestGetAdoptedAnimalSuccess(t *testing.T) {
 			},
 		},
 	}
-	// Append 20 random FetchData structs containing anywhere from 1..20 Animals each
-	for _ = range 20 {
-		testData = append(testData, FetchData{generateRandomAnimals(20)})
+	// Append 100 random FetchData structs containing anywhere from 1..100 Animals each
+	for _ = range 100 {
+		testData = append(testData, FetchData{generateRandomAnimals(100)})
 	}
 
 	// Use test data in "table driven" testing approach/loop
@@ -233,5 +233,60 @@ func TestGetAdoptedAnimalSuccess(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Test unsuccessful fetch of added animals into DB
+func TestGetAdoptedAnimalFailEmpty(t *testing.T) {
+	db := initTestDBHelper(t)
+	defer db.Close()
+
+	resultMsg := getAdoptedAnimal(db, "dog")
+	expectedMsg := "Sorry, but we don't have any animal types to adopt."
+	if resultMsg != expectedMsg {
+		t.Fatalf("Expected message for no animal to adopt, but got: %s", resultMsg)
+	}
+}
+
+// Test unsuccessful fetch of adopted animal when only other types exist
+func TestGetAdoptedAnimalFailWrongType(t *testing.T) {
+	db := initTestDBHelper(t)
+	defer db.Close()
+
+	animals := []Animal{
+		Animal{Dog, "dog1"},
+		Animal{Dog, "dog2"},
+		Animal{Dog, "dog2"},
+	}
+
+	// Insert data into db
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Prepare a statement for repeated usage
+	stmt, err := tx.Prepare("INSERT INTO Animals(type, name) VALUES (?, ?)")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer stmt.Close()
+
+	for _, a := range animals {
+		// Add animal to DB
+		_, err = stmt.Exec(a.animal, a.name)
+	}
+
+	// Commit the DB transaction
+	err = tx.Commit()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resultMsg := getAdoptedAnimal(db, "cat")
+	expectedMsg := "Sorry, but we don't have any animal types to adopt."
+	if resultMsg != expectedMsg {
+		t.Fatalf("Expected message for no animal to adopt, but got: %s", resultMsg)
 	}
 }
