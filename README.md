@@ -2,6 +2,10 @@
 
 This is a simple GUI app in Go built using the Fyne GUI framework.
 
+The app allows a user to add animals ready for adoption into a database, as well
+as pick an animal of desired type (e.g. dog) to adopt from the database (also
+removing it from the database).
+
 ## Getting Started: Building and Running the App
 
 ### Requirements:
