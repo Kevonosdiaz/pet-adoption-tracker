@@ -14,17 +14,20 @@ func addSurrenderedAnimal(db *sql.DB, animalTypeString string, animalName string
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Protect against an early exit without Commit() being called successfully
+	defer tx.Rollback()
+
 	// Prepare our query
-	stmt, err := tx.Prepare("INSERT INTO Animals(type, name) VALUES (?, ?)")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stmt.Close()
+	query := "INSERT INTO Animals(type, name) VALUES (?, ?)"
+
 	// Execute query with values; animalTypeString is converted back to an enum (int) first
-	_, err = stmt.Exec(stringToAnimalType[animalTypeString], animalName)
+	_, err = tx.Exec(query, stringToAnimalType[animalTypeString], animalName)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Commit it to DB
 	err = tx.Commit()
 	if err != nil {
 		log.Fatal(err)
@@ -33,11 +36,22 @@ func addSurrenderedAnimal(db *sql.DB, animalTypeString string, animalName string
 }
 
 func getAdoptedAnimal(db *sql.DB, animalTypeString string) {
-
+	// tx, err := db.Begin()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	//
+	// // First check if there is an animal we can get
 }
 
+// Gets either total number of animals if animalTypeString is "all animals", else count for specific animal
 func getAnimalCount(db *sql.DB, animalTypeString string) {
-
+	// Prepare our query, adding extra condition if animalTypeString is a specific type
+	if animalTypeString == "all animals" {
+		// return getAllAnimalCount(db)
+	} else {
+		// return getSpecificAnimalCount(db, animalTypeString)
+	}
 }
 
 // Create main table if it does not exist
