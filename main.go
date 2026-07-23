@@ -19,6 +19,10 @@ func getAdoptedAnimal(animalTypeString string) {
 
 }
 
+func getAnimalCount(animalTypeString string) {
+
+}
+
 // Create UI element allowing user to add newly surrendered animal to database
 func makeSurrenderForm() fyne.CanvasObject {
 	// Create widgets for name text field and animal type selector dropdown
@@ -94,19 +98,45 @@ func makeAdoptionForm() fyne.CanvasObject {
 	return form
 }
 
+// Create UI element allowing user to get animal count for all animals or specific type
+func makeAnimalCountForm() fyne.CanvasObject {
+	// Allow user to pick "all animals" (default) to get count of all animals, or select a specific type instead
+	animalTypeSelector := widget.NewSelect(append(getAllAnimalStrings(), "all animals"), func(s string) {})
+	animalTypeSelector.PlaceHolder = "all animals"
+
+	form := &widget.Form{
+		Items: []*widget.FormItem{
+			{Text: "Animal Type", Widget: animalTypeSelector, Required: false},
+		},
+		// Send off form data to other function to handle database interaction
+		// and clear fields to prepare for another submission
+		OnSubmit: func() {
+			getAnimalCount(animalTypeSelector.Selected)
+			animalTypeSelector.ClearSelected()
+		},
+		SubmitText: "Get Count",
+		// NOTE: No validator needed here since all options (incl. default/placeholder) are valid
+	}
+
+	form.Refresh()
+	return form
+}
+
 func main() {
 	// Setup Fyne GUI boilerplate
 	myApp := app.New()
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
 	// Create Fyne CanvasObject objects and corresponding labels for each UI element to add to the main window
-	addSurrenderedAnimalText := widget.NewLabel("Add a New Surrendered Animal")
+	addSurrenderedAnimalText := widget.NewLabel("Add a New Surrendered Animal:")
 	addSurrenderedAnimalSection := makeSurrenderForm()
-	getAdoptedAnimalText := widget.NewLabel("Pick an Animal to Adopt")
+	getAdoptedAnimalText := widget.NewLabel("Pick an Animal to Adopt:")
 	getAdoptedAnimalSection := makeAdoptionForm()
+	animalCountText := widget.NewLabel("Check How Many Animals Are Up For Adoption:")
+	animalCountSection := makeAnimalCountForm()
 
 	// Layout UI elements in vertical list
-	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection)
+	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection, animalCountText, animalCountSection)
 	window.SetContent(windowContent)
 
 	window.ShowAndRun()
