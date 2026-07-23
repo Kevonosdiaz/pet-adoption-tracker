@@ -11,7 +11,7 @@ removing it from the database).
 ### Requirements:
 
 - Go (version >= 1.19 for Fyne)
-- C compiler (e.g. gcc) for Fyne
+- C compiler (e.g. `gcc`) for Fyne
 - sqlite3
 
 ### Cloning Repo and Building:
@@ -22,3 +22,6 @@ cd pet-adoption-tracker
 go build .
 ./pet-adoption-tracker
 ```
+
+The `CGO_ENABLED=1` environment variable may have to be passed if building
+fails, as well as ensuring `gcc` and sqlite are available on the system.

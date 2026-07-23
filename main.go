@@ -17,7 +17,7 @@ func main() {
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
 	// Setup SQLite DB connection and confirm connection is working
-	db, err := sql.Open("sqlite3", "./animals.db")
+	db, err := sql.Open("sqlite", "./animals.db")
 	if err != nil {
 		log.Fatal(err)
 	}
