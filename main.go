@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
+	// "fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"slices"
 )
 
 func addSurrenderedAnimal(animalName string, animalTypeString string) {
@@ -29,23 +32,35 @@ func makeSurrenderForm() fyne.CanvasObject {
 			{Text: "Animal Name", Widget: animalName, Required: true},
 			{Text: "Animal Type", Widget: animalTypeSelector, Required: true},
 		},
-		// Cancel will act as clear button
-		// OnCancel: func() {
-		// 	animalName.Refresh()
-		// 	animalTypeSelector.Refresh()
-		// },
 		// Send off form data to other function to handle database interaction
+		// and clear fields to prepare for another submission
 		OnSubmit: func() {
 			addSurrenderedAnimal(animalName.Text, animalTypeSelector.Selected)
+			animalName.SetText("")
+			animalTypeSelector.ClearSelected()
 		},
-		// CancelText: "Clear",
 		SubmitText: "Submit",
+		// Runs on form change to ensure animalType must be given before submitting
+		Validator: func() error {
+			allAnimalTypeStrings := getAllAnimalStrings()
+			if slices.Contains(allAnimalTypeStrings, animalTypeSelector.Selected) {
+				return nil
+			}
+			return errors.New("")
+		},
 	}
+
+	// Ensure form Validator is re-run on selection change, since only Entry widget re-triggers Validator
+	animalTypeSelector.OnChanged = func(s string) {
+		form.Refresh()
+	}
+
 	form.Refresh()
 	return form
 
 }
 
+// Create UI element allowing user to get adopted animal of selected type
 func makeAdoptionForm() fyne.CanvasObject {
 	animalTypeSelector := widget.NewSelect(getAllAnimalStrings(), func(s string) {})
 	animalTypeSelector.PlaceHolder = "Select animal type"
@@ -54,17 +69,27 @@ func makeAdoptionForm() fyne.CanvasObject {
 		Items: []*widget.FormItem{
 			{Text: "Animal Type", Widget: animalTypeSelector, Required: true},
 		},
-		// Cancel will act as clear button
-		// OnCancel: func() {
-		// 	animalTypeSelector.Refresh()
-		// },
 		// Send off form data to other function to handle database interaction
+		// and clear fields to prepare for another submission
 		OnSubmit: func() {
 			getAdoptedAnimal(animalTypeSelector.Selected)
+			animalTypeSelector.ClearSelected()
 		},
-		// CancelText: "Clear",
 		SubmitText: "Submit",
+		Validator: func() error {
+			allAnimalTypeStrings := getAllAnimalStrings()
+			if slices.Contains(allAnimalTypeStrings, animalTypeSelector.Selected) {
+				return nil
+			}
+			return errors.New("")
+		},
 	}
+
+	// Ensure form Validator is re-run on selection change, since only Entry widget re-triggers Validator
+	animalTypeSelector.OnChanged = func(s string) {
+		form.Refresh()
+	}
+
 	form.Refresh()
 	return form
 }
@@ -74,9 +99,11 @@ func main() {
 	myApp := app.New()
 	window := myApp.NewWindow("Pet Adoption Tracker")
 
+	// Create Fyne CanvasObject objects for each UI element to add to the main window
 	addSurrenderedAnimalSection := makeSurrenderForm()
 	getAdoptedAnimalSection := makeAdoptionForm()
 
+	// Layout UI elements in vertical list
 	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalSection, getAdoptedAnimalSection)
 	window.SetContent(windowContent)
 

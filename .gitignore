@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+pet-adoption-tracker
 
 # Test binary, built with `go test -c`
 *.test
