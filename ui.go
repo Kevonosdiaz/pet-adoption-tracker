@@ -100,7 +100,7 @@ func makeAdoptionForm(db *sql.DB) fyne.CanvasObject {
 func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 	// Allow user to pick "all animals" (default) to get count of all animals, or select a specific type instead
 	animalTypeSelector := widget.NewSelect(append(getAllAnimalStrings(), "all animals"), func(s string) {})
-	animalTypeSelector.PlaceHolder = "all animals"
+	animalTypeSelector.Selected = "all animals"
 
 	// Display resulting count in this label
 	resultText := widget.NewLabel("")
@@ -114,7 +114,6 @@ func makeAnimalCountForm(db *sql.DB) fyne.CanvasObject {
 		OnSubmit: func() {
 			resultMsg := getAnimalCount(db, animalTypeSelector.Selected)
 			resultText.SetText(resultMsg)
-			animalTypeSelector.ClearSelected()
 		},
 		SubmitText: "Get Count",
 		// NOTE: No validator needed here since all options (incl. default/placeholder) are valid

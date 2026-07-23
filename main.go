@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -43,6 +44,8 @@ func main() {
 	// Layout UI elements in vertical list
 	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection, animalCountText, animalCountSection)
 	window.SetContent(windowContent)
+	window.Resize(fyne.NewSize(500, 600))
+	window.SetFixedSize(true)
 
 	// Begin showing window and exec Fyne event loop
 	window.ShowAndRun()
