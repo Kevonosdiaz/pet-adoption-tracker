@@ -1,6 +1,6 @@
 package main
 
-// Contains functions to create complex widgets/UI elements
+// Contains functions to create Fyne widgets/UI elements
 
 import (
 	"database/sql"

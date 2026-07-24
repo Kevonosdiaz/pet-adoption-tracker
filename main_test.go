@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-// Quick checks to see if AnimalType enum and related helpers are consistent
+// Tests AnimalType enum and related helpers to ensure consistency between all of them
 func TestEnums(t *testing.T) {
 	var animalStrings []string
 	// We should be able to go back and forth and match original AnimalType
@@ -64,7 +64,8 @@ func initTestDBHelper(t *testing.T) *sql.DB {
 func generateRandomString() string {
 	// Allow length anywhere from 1..64 characters and just stick to alpha chars
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	n := rand.N(63) + 1
+	// Shift IntN interval [0,64) by 1 to get [1..64]
+	n := rand.IntN(64) + 1
 	b := make([]byte, n)
 	// Pick a (pseudo)random letter from letterBytes for each char in b
 	for i := range b {
@@ -202,7 +203,6 @@ func TestGetAdoptedAnimalSuccess(t *testing.T) {
 
 			// Insert all animals in order, also separating out animals by type here for tracking oldest per type later
 			numTypes := len(allAnimalTypes)
-			// numOfEachType := make([]int, numTypes)
 			animalsByType := make([][]Animal, numTypes)
 			for _, a := range tt.animals {
 				// Add animal to DB
@@ -222,6 +222,7 @@ func TestGetAdoptedAnimalSuccess(t *testing.T) {
 			// Compile regex pattern for parsing result of getAdoptedAnimal() later, for alphanumeric names
 			re := regexp.MustCompile(`Adopted animal is: ([a-zA-Z0-9]+)`)
 			for i = range numTypes {
+				// Go through all animals of type i
 				animalTypeString := animalNames[AnimalType(i)]
 				for _, a := range animalsByType[i] {
 					resultMsg := getAdoptedAnimal(db, animalTypeString)
@@ -236,8 +237,9 @@ func TestGetAdoptedAnimalSuccess(t *testing.T) {
 	}
 }
 
-// Test unsuccessful fetch of added animals into DB
+// Test unsuccessful fetch of animals into DB
 func TestGetAdoptedAnimalFailEmpty(t *testing.T) {
+	// Leave db initialized with empty Animals table
 	db := initTestDBHelper(t)
 	defer db.Close()
 
@@ -253,10 +255,11 @@ func TestGetAdoptedAnimalFailWrongType(t *testing.T) {
 	db := initTestDBHelper(t)
 	defer db.Close()
 
+	// Only add dogs, no cats
 	animals := []Animal{
 		Animal{Dog, "dog1"},
 		Animal{Dog, "dog2"},
-		Animal{Dog, "dog2"},
+		Animal{Dog, "dog3"},
 	}
 
 	// Insert data into db
@@ -284,6 +287,7 @@ func TestGetAdoptedAnimalFailWrongType(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Try adopting a cat from the database, and expect error message since no cats were added
 	resultMsg := getAdoptedAnimal(db, "cat")
 	expectedMsg := "Sorry, but we don't have any animal types to adopt."
 	if resultMsg != expectedMsg {
@@ -309,14 +313,15 @@ func sumSlice(s []int) int {
 func TestGetAnimalCount(t *testing.T) {
 	// First, prepare test data based on current number of animal types
 	numTypes := len(allAnimalTypes)
-	// Include all zeroes + randomized counts
+
+	// Include all zeroes (uninitialized []int) + randomized counts
 	testData := []CountData{
 		{make([]int, numTypes)},
 	}
 	// Prepare 100 sets of randomized counts
 	for _ = range 100 {
 		counts := make([]int, numTypes)
-		// Invididual counts can be up to 99 (N-1)
+		// Invididual counts per AnimalType can be up to 99 (N-1)
 		for i := range counts {
 			counts[i] = rand.IntN(100)
 		}
@@ -327,7 +332,7 @@ func TestGetAnimalCount(t *testing.T) {
 	for _, tt := range testData {
 		testname := fmt.Sprint(tt)
 
-		// Execute "subtest" on one data element from testData
+		// Execute "subtest" on one set of counts from testData
 		t.Run(testname, func(t *testing.T) {
 			// Spin up fresh DB per test
 			db := initTestDBHelper(t)
@@ -363,11 +368,11 @@ func TestGetAnimalCount(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// For every specific type, and all types, query getAnimalCount and compare results
-			// Compile regex patterns for parsing count from returned msg
+			// Compile regex patterns for parsing count from returned msg of getAnimalCount()
 			specific_re := regexp.MustCompile(`Number of ([a-zA-Z]+)s: ([0-9]+)`)
 			total_re := regexp.MustCompile(`Total number of animals: ([0-9]+)`)
 
+			// Query getAnimalCount() for each specific AnimalType and check returned count
 			for i := range numTypes {
 				animalTypeString := animalNames[AnimalType(i)]
 				resultMsg := getAnimalCount(db, animalTypeString)
@@ -377,11 +382,14 @@ func TestGetAnimalCount(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				// Check against the number of animals of type i that we added to db earlier
 				expectedCount := tt.countsPerType[i]
 				if actualCount != expectedCount {
 					t.Errorf("Got %d, wanted %d count", actualCount, expectedCount)
 				}
 			}
+
+			// Query getAnimalCount() for total number of animals and check returned count
 			resultMsg := getAnimalCount(db, "all animals")
 			matches := total_re.FindStringSubmatch(resultMsg)
 			// For this pattern, the first capture group is the count
@@ -389,6 +397,7 @@ func TestGetAnimalCount(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			// Check against total number of animals that were added to the db
 			expectedCount := sumSlice(tt.countsPerType)
 			if actualCount != expectedCount {
 				t.Errorf("Got %d, wanted %d total count", actualCount, expectedCount)

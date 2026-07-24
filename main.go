@@ -32,8 +32,8 @@ func main() {
 	// Initialize Animals table (if not yet created)
 	initDB(db)
 
-	// Create Fyne CanvasObject objects and corresponding subheading-sized labels for each UI element to add to the main window
-	// Pass in SQLite DB handle so widgets can access it
+	// Create Fyne widgets and corresponding subheading labels for each UI element to add to the main window
+	// Pass in SQLite DB handle so widgets can interact with the database during runtime
 	addSurrenderedAnimalText := widget.NewLabel("Add a New Surrendered Animal:")
 	addSurrenderedAnimalText.SizeName = theme.SizeNameSubHeadingText
 	addSurrenderedAnimalSection := makeSurrenderForm(db)
@@ -46,7 +46,7 @@ func main() {
 	animalCountText.SizeName = theme.SizeNameSubHeadingText
 	animalCountSection := makeAnimalCountForm(db)
 
-	// Layout UI elements in vertical list
+	// Layout UI elements in vertical list and adjust size of the window
 	windowContent := container.New(layout.NewVBoxLayout(), addSurrenderedAnimalText, addSurrenderedAnimalSection, getAdoptedAnimalText, getAdoptedAnimalSection, animalCountText, animalCountSection)
 	window.SetContent(windowContent)
 	window.Resize(fyne.NewSize(500, 600))

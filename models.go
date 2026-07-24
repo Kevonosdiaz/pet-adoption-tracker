@@ -21,17 +21,18 @@ var animalNames = map[AnimalType]string{
 	Cat: "cat",
 }
 
+// Allow the opposite direction so we can go from strings in Fyne/GUI functions back to int enum
 var stringToAnimalType = map[string]AnimalType{
 	"dog": Dog,
 	"cat": Cat,
 }
 
-// NOTE: Consider using official stringer tool to implement String() automatically
 // Implement String() for AnimalType for printing
 func (animal AnimalType) String() string {
 	return animalNames[animal]
 }
 
+// Return slice of strings for all string versions of each AnimalType value, using implemented String()
 func getAllAnimalStrings() []string {
 	var animalTypeStrings []string
 	for _, animal := range allAnimalTypes {

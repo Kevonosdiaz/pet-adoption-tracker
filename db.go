@@ -44,10 +44,12 @@ func getAdoptedAnimal(db *sql.DB, animalTypeString string) string {
 	var animalResult Animal
 	animalType := stringToAnimalType[animalTypeString]
 	selectQuery := "SELECT id, type, name FROM Animals WHERE type = ? ORDER BY time_added ASC LIMIT 1;"
+
 	// Scan in resulting query info into appropriate variables
 	err := db.QueryRow(selectQuery, animalType).Scan(&animalId, &animalResult.animal, &animalResult.name)
 
 	// Error handling for above query
+	// Check for specifically no animal returned; this is fine and we return an error msg
 	if errors.Is(err, sql.ErrNoRows) {
 		return "Sorry, but we don't have any animal types to adopt."
 	}
@@ -91,6 +93,7 @@ func getAllAnimalCount(db *sql.DB) string {
 		log.Fatal(err)
 	}
 
+	// Make sure resulting int is converted to a string first to allow concatenation
 	return "Total number of animals: " + strconv.Itoa(countResult)
 }
 
